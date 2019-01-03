@@ -559,6 +559,15 @@ def check_status(container, desired_state):
         return
     ok("{} status is {}".format(container, desired_state))
 
+@multithread_execution()
+def check_not_status(container, undesired_state):
+    normized_undesired_state = undesired_state.lower()
+    normalized_state = normalize_state(get_state(container)).lower()
+    if normized_undesired_state == normalized_state:
+        critical("{} state is {}".format(container, undesired_state))
+        return
+    ok("{} status is not {}".format(container, undesired_state))
+
 
 @multithread_execution()
 @require_running('health')
@@ -784,6 +793,13 @@ def process_args(args):
                         type=str,
                         help='Desired container status (running, exited, etc).')
 
+    # Undesired State
+    parser.add_argument('--not_status',
+                        dest='not_status',
+                        action='store',
+                        type=str,
+                        help='Undesired container status (dead, unhealthy).')
+
     # Health
     parser.add_argument('--health',
                         dest='health',
@@ -939,6 +955,9 @@ def perform_checks(raw_args):
         # Check status
         if args.status:
             check_status(container, args.status)
+
+        if args.not_status:
+            check_not_status(container, args.not_status)
 
         # Check version
         if args.version:
